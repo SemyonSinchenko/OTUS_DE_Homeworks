@@ -24,13 +24,13 @@ object ExerciseOne extends (RDD[SAPRow] => Unit) {
       .zipWithIndex()
       .filter(f => f._2 <= 3)
       .map(_._1._1)
-      .saveAsTextFile("2a") 
+      .saveAsTextFile("2a.txt")
 
       v1.groupBy(r => r.name).map{case (k: String, vs: Iterable[SAPRow]) => {
         k -> {
           val sortedSeq = vs.toArray.sortBy(_.date).reverse
 
-          sortedSeq.tail.zipWithIndex.map{case (r: SAPRow, idx: Int) => {
+          sortedSeq.zipWithIndex.tail.map{case (r: SAPRow, idx: Int) => {
             val prev = sortedSeq(idx - 1).close
             if (prev.compareTo(.0) != 0) {
               r.close / prev - 1
@@ -43,6 +43,6 @@ object ExerciseOne extends (RDD[SAPRow] => Unit) {
         .zipWithIndex()
         .filter(f => f._2 <= 3)
         .map(_._1._1)
-        .saveAsTextFile("2b")
+        .saveAsTextFile("2b.txt")
   }
 }

@@ -285,3 +285,7 @@ tags
 [._]*.un~
 
 # End of https://www.toptal.com/developers/gitignore/api/scala,metals,bloop,intellij,python,sbt,vim
+#
+#
+.idea
+project*
