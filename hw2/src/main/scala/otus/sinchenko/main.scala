@@ -1,8 +1,10 @@
 package otus.sinchenko
 
-import opp.{ExerciseOne, Reader, SparkSessionInitializer}
+import opp.{ExerciseOne, ExerciseTwo, Reader, SparkSessionInitializer}
 
 object Main extends App {
   SparkSessionInitializer()
-  ExerciseOne(Reader())
+  val rdd = Reader()
+  ExerciseOne(rdd)
+  ExerciseTwo(rdd)
 }

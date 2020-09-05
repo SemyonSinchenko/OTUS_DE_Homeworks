@@ -6,6 +6,7 @@ object SparkSessionInitializer extends (() => Unit) {
   override def apply(): Unit = {
     SparkSession
       .builder()
+      .master("yarn")
       .appName("SinchenkoHW2App")
       .getOrCreate()
   }
