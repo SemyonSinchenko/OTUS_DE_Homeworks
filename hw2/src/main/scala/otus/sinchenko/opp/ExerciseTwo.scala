@@ -3,38 +3,44 @@ package otus.sinchenko.opp
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 
+import collection.JavaConversions._
+import scala.collection.mutable
+
 object ExerciseTwo extends (RDD[SAPRow] => Unit) {
   override def apply(v1: RDD[SAPRow]): Unit = {
-    val names = v1.map(_.name).distinct().collect()
+    val accStd = new StDivAccum
+    val accDot = new DotProductAcc
 
-    SparkSession.builder().getOrCreate().sparkContext.parallelize(
-      names.flatMap(n1 => {
-        names.filter(n => n <= n1).map(
-          n2 => (n1, n2) -> {
-            val rdd1 = v1.filter(f => f.name == n1).map(f => f.date -> {
-              (f.open + f.close) / 2
-            })
+    val spark = SparkSession.builder().getOrCreate()
+    spark.sparkContext.register(accStd)
+    spark.sparkContext.register(accDot)
 
-            val rdd2 = v1.filter(f => f.name == n2).map(f => f.date -> {
-              (f.open + f.close) / 2
-            })
+    v1.groupBy(_.date).map(_._2).foreach(f => {
+      accDot.add(f)
+      accStd.add(f)
+    })
 
-            correlation(rdd1, rdd2)
-          }
-        )
-      }).sortBy(_._2).reverse.take(3).map(_._1)
+    val stdDivs = accStd.value
+    val dotProducts = accDot.value
+
+    val correlations = new mutable.HashMap[(String, String), Double]()
+    for (v <- dotProducts.entrySet()) {
+      correlations(v.getKey) = {
+        val den = stdDivs.get(v.getKey._1) * stdDivs.get(v.getKey._2)
+
+        if (den.compareTo(.0) == 0) {
+          .0
+        } else {
+          v.getValue / Math.sqrt(den)
+        }
+      }
+    }
+
+    spark.sparkContext.parallelize(
+      correlations.toArray
+        .sortBy(_._2).reverse
+        .map(_._1)
+        .take(3)
     ).saveAsTextFile("3.txt")
-  }
-
-  private def correlation(v1: RDD[(String, Double)], v2: RDD[(String, Double)]): Double = {
-    val joined = v1.join(v2)
-    val norms = joined.map(_._2).reduce{case ((acc1: Double, acc2: Double), (val1: Double, val2: Double)) => {
-      (acc1 + val1 * val1, acc2 + val2 * val2)
-    }}
-
-    joined
-      .map(_._2)
-      .map(f => f._1 * f._2)
-      .reduce{case (acc: Double, v: Double) => acc + v} / Math.sqrt(norms._1 * norms._2)
-  }
+ }
 }
