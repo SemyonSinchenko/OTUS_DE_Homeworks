@@ -23,7 +23,7 @@ class DotProductAcc()
 
   override def add(v: Iterable[SAPRow]): Unit = {
     v.foreach(r1 => {
-      v.filter(_.name <= r1.name).foreach(
+      v.filter(_.name < r1.name).foreach(
         r2 => {
           val mid1 = (r1.open + r1.close) / 2
           val mid2 = (r2.open + r2.close) / 2
